@@ -141,6 +141,37 @@ dsh plugin --profile web add -w dsh-settings-plugin-hub@github:huiikeung/dsh-set
 本包**没有构建步骤**（`lib/*.js` 就是产物，手写 JS），所以从 git 安装不需要 pnpm 放行
 任何构建脚本；仓库里也不含 `node_modules` 或任何生成物。
 
+实测（在临时 profile 里跑的探针，未动现有安装）：上面第一条命令一次就同时写了
+`dependencies` 与 `dsh.profile.bundles` —— 也就是说**装完就是启用状态**，重启 dsh 即生效，
+不需要再去「设置 → 插件」里手动启用组合包；`node_modules/dsh-settings-plugin-hub/lib/`
+里四个文件齐全。
+
+两个小坑：
+
+- `-w`（工作区根）要求该 profile 是 pnpm 工作区。DSH 生成的 profile 都是
+  （目录里有 `pnpm-workspace.yaml`）；如果你手工搭了个裸 profile，去掉 `-w` 即可。
+- 国内网络走 GitHub 可能很慢或超时（HTTPS 尤其不稳，SSH 反而正常）。慢的话可以先
+  `git clone` 到本地，再用上面的 `link:` 方式装。
+
+### 从 npm registry 安装（可选，需要先发布）
+
+包名 `dsh-settings-plugin-hub` 在 npm 上**还没有被占用**，本包也已去掉
+`private` 字段、可以发布。要发到公共 registry：
+
+```sh
+npm login --registry=https://registry.npmjs.org   # 本机 .npmrc 指向的是 npmmirror 镜像，不能用来发布
+npm publish --registry=https://registry.npmjs.org
+```
+
+发布后即可：
+
+```sh
+dsh plugin --profile web add -w dsh-settings-plugin-hub@0.2.2
+```
+
+（注意：`npmmirror` 是只读镜像，只能装不能发。发布这一步需要你自己的 npm 账号和
+token —— 我这边没有凭据，所以没有替你发。）
+
 ### 配置
 
 `cordis.patch.yml` 里都可省：
