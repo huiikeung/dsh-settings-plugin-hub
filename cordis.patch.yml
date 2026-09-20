@@ -1,0 +1,21 @@
+# dsh-settings-plugin-hub Web profile layer.
+#
+# 宿主半边（lib/index.js）注册三个端点：
+#   GET  /settings-plugin-hub/inventory   当前 profile 的包清单（来源 + 分页归属）
+#   POST /settings-plugin-hub/resolve     浏览器上报分页 → 分组结果 + 固定项
+#   GET  /settings-plugin-hub/pins        读「固定在左侧栏显示」白名单
+#   PUT  /settings-plugin-hub/pins        写白名单（唯一写操作）
+# 全部要求动作头 x-settings-plugin-hub-action。
+# 浏览器半边（lib/client.js）由 package.json 的 `dsh.client` 声明被 client-modules 扫描。
+#
+# 配置（都可省）：
+#   profile   读哪个 profile 的 package.json（默认 web）
+#   profileDir 显式指定 profile 目录（默认 $DSH_HOME/profiles/<profile>）
+#   dataDir    显式指定 DSH 数据根目录；固定项落在
+#              <dataDir>/plugin-data/dsh-settings-plugin-hub/pins.json
+#              （默认同样由 $DSH_HOME 解析）
+- insert:
+    - id: settings-plugin-hub
+      name: 'dsh-settings-plugin-hub'
+      config:
+        profile: web

@@ -1,0 +1,15 @@
+# 仓库里不放的东西
+node_modules/
+*.log
+
+# 本地脚本/工具留下的副本
+*.bak
+*.tmp
+.tmp/
+
+# 编辑器与系统噪声
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
