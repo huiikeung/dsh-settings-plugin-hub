@@ -172,6 +172,34 @@ dsh plugin --profile web add -w dsh-settings-plugin-hub@0.2.2
 （注意：`npmmirror` 是只读镜像，只能装不能发。发布这一步需要你自己的 npm 账号和
 token —— 我这边没有凭据，所以没有替你发。）
 
+### 上架到插件市场列表（awesome-dsh-plugin / dsh-market）
+
+先说清机制，免得找错地方：
+
+- **市场（dshmarket）自己不发列表**。它每次打开都实时拉
+  [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin)
+  发布的 `plugins.json`（可用 `DSHM_REGISTRY_URL` 换镜像）。
+- **市场装插件也不是自己跑 pnpm**，而是**重新调用官方 DSH CLI**：市场仓库的
+  `lib/dsh-cli.js` 里 `runDshPlugin()` 会 spawn
+  `<node> <当前 dsh 入口> plugin --profile <name> add <spec>`（外加 PATH、git 提示抑制、
+  进度转发等处理）。官方 CLI 负责 bundle 层合并与 `allowBuilds` 授权，所以市场里的安装
+  和你手敲命令**是同一条路径**。「我的插件」面板（`dsh-my-plugins`）同样是 spawn 官方 CLI。
+
+所以「提交到市场」= 往 awesome-dsh-plugin **提一个文件**：
+
+1. 用备好的条目（路径、文件名都别改）：
+   [`market/huiikeung__dsh-settings-plugin-hub.yml`](market/huiikeung__dsh-settings-plugin-hub.yml)
+2. 在 awesome-dsh-plugin 里放到 `data/plugins/huiikeung__dsh-settings-plugin-hub.yml`，
+   提 PR。**一个 PR 最多 3 条**；两个 README 由脚本生成，**不要手改**（也不要手写 `npm:` 字段，
+   会被校验拒绝——npm 映射是自动采集的）。
+3. 收录门槛（CI 自动查）：仓库里有 `package.json` 声明 `dsh.bundle` ✅、仓库存在且未归档 ✅、
+   不是 DSH 本体 ✅、**仓库年龄 ≥ 1 天**。不满足年龄时 CI 会红，但那条检查每 6 小时自动重跑，
+   **不用重提 PR**，约 24 小时后自己变绿。
+
+收录与是否发 npm 无关；发了 npm 市场才会显示下载量。本条目已用他们仓库自己的校验器
+（`scripts/lib/entries.mjs` 的 `validateEntries`）验过：文件名 slug、分类 id（`ui`）、
+`description.en` 必填且单行、含 `: ` 的值加引号 —— 全部通过。
+
 ### 配置
 
 `cordis.patch.yml` 里都可省：

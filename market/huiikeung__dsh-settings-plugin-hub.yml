@@ -1,0 +1,11 @@
+# awesome-dsh-plugin 收录条目（dsh-market 的插件列表就来自这个仓库）
+#
+# 这就是全部投稿内容：把这一个文件放进 awesome-dsh-plugin 的
+# `data/plugins/` 目录（文件名必须叫 <owner>__<repo>.yml），然后提 PR。
+# 详见仓库根目录 README「上架到市场列表」一节。
+url: https://github.com/huiikeung/dsh-settings-plugin-hub
+name: huiikeung/dsh-settings-plugin-hub
+category: ui
+description:
+  en: 'Collects every third-party settings page into one "Third-party plugins" entry in the DSH settings sidebar, labels each by install source (local link:/file: vs registry or git), and pins chosen pages back to their own sidebar row across restarts.'
+  zh: '把第三方插件注册的设置分页全部收进设置左侧栏唯一的「第三方插件」入口，按安装来源（本地 link:/file: 与注册表/git）分组，并支持把任意分页「固定」回左侧栏单独显示（重启后仍生效）。'
