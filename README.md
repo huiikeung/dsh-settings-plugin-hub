@@ -200,6 +200,17 @@ token —— 我这边没有凭据，所以没有替你发。）
 （`scripts/lib/entries.mjs` 的 `validateEntries`）验过：文件名 slug、分类 id（`ui`）、
 `description.en` 必填且单行、含 `: ` 的值加引号 —— 全部通过。
 
+不想手工 fork / 建分支 / 对齐文件名，就用仓库里的提交脚本（**默认 dry-run，不碰网络**）：
+
+```sh
+node scripts/submit-market-listing.mjs          # 只打印会做什么
+gh auth login                                   # 只需一次（脚本用 gh 建 fork 与 PR）
+node scripts/submit-market-listing.mjs --yes    # fork → 建分支 → 放条目 → commit → push → 提 PR
+```
+
+它在一个临时目录里克隆你的 fork、只加 `data/plugins/<owner>__<repo>.yml` 这一个文件，
+不碰你的工作区；失败会把 gh/git 的原始输出贴出来。
+
 ### 配置
 
 `cordis.patch.yml` 里都可省：
@@ -232,7 +243,7 @@ cd /vol1/1000/Deepseek-Harness/工作台/插件/dsh-settings-plugin-hub
 npm test          # = node --test tests/*.test.mjs
 ```
 
-97 个测试，分六层：
+106 个测试，分七层：
 
 | 文件 | 覆盖 |
 |---|---|
@@ -242,6 +253,7 @@ npm test          # = node --test tests/*.test.mjs
 | `tests/client.test.mjs` | 用 `window.__ModuleLoader__` 桩加载**真实产物** `lib/client.js`：账本投影、索引/label 对齐、收纳与还原、点击代理、固定/取消的乐观更新与失败回退、**固定数为 0 时整块「固定」区域不渲染（含已保存状态行）而分组列表照常**、与宿主对话的成功/失败两条路径、`apply` 接线与 dispose 还原 |
 | `tests/integration.test.mjs` | **两个半边真打**：浏览器的 fetch 直接打到宿主 handler 上（路径/动作头/字段名对不对），固定→落盘→**模拟重启换实例**后固定项仍在，取消到 0 后整块「固定」区域随之隐藏，临时显示全部分页不动固定项 |
 | `tests/install-scripts.test.mjs` | 在临时 profile 上真跑安装/回滚脚本：dry-run 不落盘、幂等、整文件回滚、被别的改动岔开时只摘自己的痕迹 |
+| `tests/submit-market.test.mjs` | 市场投稿脚本：条目文件定位（0/1/多个）、`<owner>__<repo>.yml` 文件名规则、分支名与 PR 正文生成，以及**默认 dry-run 不发网络请求** |
 
 这台机器上 headless Chromium 起不来（root 无沙箱），所以浏览器侧用一个最小假 DOM
 （`tests/fake-dom.mjs`）驱动，而不是跳过。
@@ -282,7 +294,8 @@ node scripts/rollback-profile.mjs   # 只摘本插件的痕迹；若安装后没
 | `lib/index.js` | 宿主插件：三个 HTTP 端点 + 动作头校验 |
 | `lib/client.js` | 浏览器半边：收纳分页注册、左侧栏观察器、点击代理、收纳页与手工选择区 |
 | `cordis.patch.yml` | bundle patch：把宿主半边挂进 profile |
-| `scripts/` | profile 改动的单一实现 + 安装/回滚脚本 |
+| `scripts/` | profile 改动的单一实现 + 安装/回滚脚本 + 市场投稿脚本 |
+| `market/` | awesome-dsh-plugin（市场列表数据源）的收录条目，一个文件就是全部投稿 |
 
 ## 许可
 
