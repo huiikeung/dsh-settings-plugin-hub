@@ -225,6 +225,24 @@ node scripts/submit-market-listing.mjs --yes    # fork → 建分支 → 放条�
         # dataDir: /abs/path/to/dsh-home   # 显式指定 DSH 数据根目录（固定项落在这里）
 ```
 
+### 左侧栏图标（核心小补丁，DSH 升级后重跑）
+
+官方外壳的 `navIcon(id)` 是硬编码的 id→图标映射，`settings.section` 契约没有 icon 字段；
+不带补丁时本分页只能落到默认齿轮（和「通用」重样）。本仓库带了一个幂等小脚本，
+把「第三方插件」换成官方的 **IconCordisPluginOutline14**（Cordis 插件图标 —— 这些分页
+本来就是 Cordis 插件，语义最贴，也和「内置插件」的 Personalization 图标区分开）：
+
+```sh
+node scripts/patch-sidebar-icon.mjs     # 幂等；首次运行会在旁边留 client.js.dsh-settings-plugin-hub.bak
+```
+
+- 改图标：改脚本里的 `ICON` 常量（可用值见 `@deepseek-ai/dsh-client-ui-primitives`
+  的 `Icon*Outline*` 导出，例如 `IconPluginPinwheelOutline16`）。
+- 补丁直接写在 DSH runtime 的核心 bundle 上，**DSH 升级后会被覆盖，需重跑本脚本**
+  （与 dsh-search 的 `web-tools → IconGlobeOutline14` 同款做法，两个脚本各加各的分支，
+  先后顺序无所谓）。打完重启 dsh 生效。
+- 回滚：还原 `client.js.dsh-settings-plugin-hub.bak` 即可。
+
 ## 使用
 
 - **重新识别**：重读账本与宿主清单（新装插件后一般无需手动点，账本一变就会自动重解析）。
@@ -271,6 +289,9 @@ npm test          # = node --test tests/*.test.mjs
   判为内置留在原地；纯靠 id 白名单兜底的分支才需要同步更新。
 - **左侧栏收纳是 DOM 层操作**：官方外壳换成非 `nav > button` 结构时，本插件会识别不出按钮
   并**放弃隐藏**（此时左侧栏就是原生形状，功能不受损，收纳页里的卡片依然可用）。
+- **左侧栏图标是核心补丁**：写在 DSH runtime 的
+  `dsh-client-ui-settings-general/lib/client.js` 上（有 `.bak`），DSH 升级会被覆盖，
+  重跑 `node scripts/patch-sidebar-icon.mjs` 即可；不跑也只是图标退回默认齿轮。
 
 ## 回滚
 
@@ -294,7 +315,7 @@ node scripts/rollback-profile.mjs   # 只摘本插件的痕迹；若安装后没
 | `lib/index.js` | 宿主插件：三个 HTTP 端点 + 动作头校验 |
 | `lib/client.js` | 浏览器半边：收纳分页注册、左侧栏观察器、点击代理、收纳页与手工选择区 |
 | `cordis.patch.yml` | bundle patch：把宿主半边挂进 profile |
-| `scripts/` | profile 改动的单一实现 + 安装/回滚脚本 + 市场投稿脚本 |
+| `scripts/` | profile 改动的单一实现 + 安装/回滚脚本 + 市场投稿脚本 + 侧栏图标补丁 |
 | `market/` | awesome-dsh-plugin（市场列表数据源）的收录条目，一个文件就是全部投稿 |
 
 ## 许可
