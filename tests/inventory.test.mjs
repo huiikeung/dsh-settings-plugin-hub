@@ -109,6 +109,22 @@ describe('extractSectionIds', () => {
     assert.deepEqual(extractSectionIds(source), []);
   });
 
+  it('id 是常量标识符时回源码解析它的值（dsh-search 的真实写法）', () => {
+    const source = 'const SECTION_ID = "web-tools";\n'
+      + 'ctx.slots.inject("settings.section", () => ctx.slots.register({\n'
+      + '  name: "settings.section",\n  id: SECTION_ID,\n  order: 30\n}, C));';
+    assert.deepEqual(extractSectionIds(source), ['web-tools']);
+  });
+
+  it('常量解析不出来时宁可漏判也不猜', () => {
+    // SECTION_ID 从未被赋过字符串值 → 提取为空，该分页落进「来源未识别」。
+    const source = 'ctx.slots.register({name:"settings.section",id:SECTION_ID},C);';
+    assert.deepEqual(extractSectionIds(source), []);
+    // 常量被赋的是非字符串 → 同样不猜。
+    const nonString = 'const SECTION_ID = compute();ctx.slots.register({name:"settings.section",id:SECTION_ID},C);';
+    assert.deepEqual(extractSectionIds(nonString), []);
+  });
+
   it('没有 settings.section 时返回空', () => {
     assert.deepEqual(extractSectionIds('const a = 1;'), []);
     assert.deepEqual(extractSectionIds(undefined), []);
@@ -355,6 +371,22 @@ describe('真机 profile 只读校验', () => {
     assert.deepEqual(result.builtin.sort(), ['agent-presets', 'archived-sessions', 'general', 'models', 'plugins']);
     assert.deepEqual(result.groups.local.map((item) => item.id).sort(), ['better-display', 'vision']);
     assert.deepEqual(result.groups.remote.map((item) => item.id), ['cost-meter']);
+    assert.deepEqual(result.groups.unknown, []);
+  });
+
+  it('真机回归：dsh-search 的分页 id 是常量变量（id: SECTION_ID = "web-tools"），也要归到本地', { skip: !existsSync('/vol1/1000/Deepseek-Harness/工作台/插件/dsh-search/lib/client.js') }, () => {
+    const inventory = readProfileInventory(REAL_PROFILE_DIR);
+    assert.equal(inventory.ok, true, inventory.error);
+    const search = inventory.packages.find((pkg) => pkg.name === 'dsh-search');
+    assert.deepEqual(search.sectionIds, ['web-tools'], '常量间接写法必须被解析出来');
+    // registrant 无论是什么（该包客户端不导出 name，fiber 名不可控），
+    // 只要分页 id 能对上包，就归本地 —— 这正是线上「网页搜索显示未知」的根因。
+    const result = classifySections(
+      [{ id: 'web-tools', label: '网页搜索', order: 30, registrant: 'some-unrelated-fiber-name' }],
+      inventory,
+    );
+    assert.deepEqual(result.groups.local.map((item) => item.id), ['web-tools']);
+    assert.equal(result.groups.local[0].package, 'dsh-search');
     assert.deepEqual(result.groups.unknown, []);
   });
 });
