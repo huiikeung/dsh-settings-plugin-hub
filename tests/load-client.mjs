@@ -18,7 +18,7 @@ export const reactStub = {
 
 /**
  * 加载 bundle。
- * @param {{react?: object, document?: object, window?: object, fetchImpl?: Function}} [options]
+ * @param {{react?: object, document?: object, window?: object, fetchImpl?: Function, MutationObserver?: Function}} [options]
  * @returns {{id: string, exports: object, window: object, fetchCalls: object[]}}
  */
 export function loadClientBundle(options = {}) {
@@ -48,6 +48,9 @@ export function loadClientBundle(options = {}) {
     window,
   };
   if (options.document !== undefined) sandbox.document = options.document;
+  // 侧栏图标 Pin（pinNavGlyph）按 typeof MutationObserver 早退；浏览器里它是全局，
+  // vm realm 里默认没有。需要覆盖那条路径时由测试注入一个打桩的构造器。
+  if (options.MutationObserver !== undefined) sandbox.MutationObserver = options.MutationObserver;
   sandbox.globalThis = sandbox;
   const context = vm.createContext(sandbox);
   vm.runInContext(source, context, { filename: 'lib/client.js' });

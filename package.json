@@ -1,6 +1,6 @@
 {
   "name": "dsh-settings-plugin-hub",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "type": "module",
   "main": "lib/index.js",
   "description": "DeepSeek Harness Web profile 插件：设置左侧栏收纳 —— 把所有第三方插件注册的 settings.section 分页收进唯一的「第三方插件」入口，按本地/非本地安装分组，并支持把想留在左侧栏的分页手工「固定」。",

@@ -225,23 +225,27 @@ node scripts/submit-market-listing.mjs --yes    # fork → 建分支 → 放条�
         # dataDir: /abs/path/to/dsh-home   # 显式指定 DSH 数据根目录（固定项落在这里）
 ```
 
-### 左侧栏图标（核心小补丁，DSH 升级后重跑）
+### 左侧栏图标（运行时 Pin，不怕 DSH 升级）
 
 官方外壳的 `navIcon(id)` 是硬编码的 id→图标映射，`settings.section` 契约没有 icon 字段；
-不带补丁时本分页只能落到默认齿轮（和「通用」重样）。本仓库带了一个幂等小脚本，
-把「第三方插件」换成官方的 **IconCordisPluginOutline14**（Cordis 插件图标 —— 这些分页
-本来就是 Cordis 插件，语义最贴，也和「内置插件」的 Personalization 图标区分开）：
+不 Pin 的话本分页只能落到默认齿轮（和「通用」重样）。所以浏览器半边在**运行时**把
+「第三方插件」那一格的 `<svg>` 原地换成官方的 **IconCordisPluginOutline14**（Cordis 插件
+图标 —— 这些分页本来就是 Cordis 插件，语义最贴，也和「内置插件」的 Personalization 图标
+区分开）：
 
-```sh
-node scripts/patch-sidebar-icon.mjs     # 幂等；首次运行会在旁边留 client.js.dsh-settings-plugin-hub.bak
-```
-
-- 改图标：改脚本里的 `ICON` 常量（可用值见 `@deepseek-ai/dsh-client-ui-primitives`
-  的 `Icon*Outline*` 导出，例如 `IconPluginPinwheelOutline16`）。
-- 补丁直接写在 DSH runtime 的核心 bundle 上，**DSH 升级后会被覆盖，需重跑本脚本**
-  （与 dsh-search 的 `web-tools → IconGlobeOutline14` 同款做法，两个脚本各加各的分支，
-  先后顺序无所谓）。打完重启 dsh 生效。
-- 回滚：还原 `client.js.dsh-settings-plugin-hub.bak` 即可。
+- **怎么做的**：`lib/client.js` 的 `pinNavGlyph()` 在 `apply()` 里调用（装样式之后）。
+  设置弹窗打开时（`document.querySelector('[role="dialog"]')` 非空），按导航格标签文本
+  （`[role="dialog"] nav button` 的 `textContent`）找到「第三方插件」那一格，保留外壳给的
+  元素/类名/尺寸，只把 svg 的几何换成 `navGlyph()` 的规格（viewBox `0 0 14 14`，形状
+  `fill="currentColor"`，自带 `<defs><clipPath>`），并打上 `data-plugin-hub-nav-icon="1"`。
+- **为什么不是给核心打补丁**：改 DSH runtime 里 `dsh-client-ui-settings-general` 的 bundle
+  不可靠 —— runtime 重新解包、`pnpm install`、或别的插件装卸自己的补丁，都会把它冲掉
+  （本插件以前那么干过：补丁被冲掉后侧栏退回齿轮，runtime 下还留了一堆 `.dsh-*.bak`
+  遗物）。运行时 Pin 不碰 runtime 任何文件，DSH 升级、重装、插件装卸都不丢。
+- **外壳重渲染也不怕**：`MutationObserver` 挂在 `document.body` 上，React 重建导航
+  （齿轮回来）时再 Pin 一遍；已打 mark 的格子跳过，幂等。
+- **换图标**：改 `lib/client.js` 里 `navGlyph()` 的规格（几何从
+  `@deepseek-ai/dsh-client-ui-primitives` 的 `Icon*Outline*` 导出机械抽取，别手改数值）。
 
 ## 使用
 
@@ -261,7 +265,7 @@ cd /vol1/1000/Deepseek-Harness/工作台/插件/dsh-settings-plugin-hub
 npm test          # = node --test tests/*.test.mjs
 ```
 
-106 个测试，分七层：
+115 个测试，分八层：
 
 | 文件 | 覆盖 |
 |---|---|
@@ -269,6 +273,7 @@ npm test          # = node --test tests/*.test.mjs
 | `tests/pins.test.mjs` | 固定项存储：归一化/去重/上限、按 profile 分桶、坏 JSON 不炸、原子写不留 `.tmp`、写失败不破坏旧文件 |
 | `tests/host-route.test.mjs` | 把 `lib/index.js` 挂到最小 cordis 上下文上，用真 `node:http` 打真请求：动作头 403、405/Allow、请求体 400、真实 profile 的分组结果、pins 读写与降级、应答不泄漏绝对路径、卸载时路由撤下 |
 | `tests/client.test.mjs` | 用 `window.__ModuleLoader__` 桩加载**真实产物** `lib/client.js`：账本投影、索引/label 对齐、收纳与还原、点击代理、固定/取消的乐观更新与失败回退、**固定数为 0 时整块「固定」区域不渲染（含已保存状态行）而分组列表照常**、与宿主对话的成功/失败两条路径、`apply` 接线与 dispose 还原 |
+| `tests/nav-glyph.test.mjs` | 侧栏图标 Pin `pinNavGlyph`：只改写标签匹配的那一格（换几何、打 `data-plugin-hub-nav-icon`）、别人的格子原封不动、mark 幂等、弹窗未开的便宜前置判断、`glyph()` 抛错时保留外壳图标、`apply()` 在装样式之后用真 label/mark/几何接线 |
 | `tests/integration.test.mjs` | **两个半边真打**：浏览器的 fetch 直接打到宿主 handler 上（路径/动作头/字段名对不对），固定→落盘→**模拟重启换实例**后固定项仍在，取消到 0 后整块「固定」区域随之隐藏，临时显示全部分页不动固定项 |
 | `tests/install-scripts.test.mjs` | 在临时 profile 上真跑安装/回滚脚本：dry-run 不落盘、幂等、整文件回滚、被别的改动岔开时只摘自己的痕迹 |
 | `tests/submit-market.test.mjs` | 市场投稿脚本：条目文件定位（0/1/多个）、`<owner>__<repo>.yml` 文件名规则、分支名与 PR 正文生成，以及**默认 dry-run 不发网络请求** |
@@ -289,9 +294,10 @@ npm test          # = node --test tests/*.test.mjs
   判为内置留在原地；纯靠 id 白名单兜底的分支才需要同步更新。
 - **左侧栏收纳是 DOM 层操作**：官方外壳换成非 `nav > button` 结构时，本插件会识别不出按钮
   并**放弃隐藏**（此时左侧栏就是原生形状，功能不受损，收纳页里的卡片依然可用）。
-- **左侧栏图标是核心补丁**：写在 DSH runtime 的
-  `dsh-client-ui-settings-general/lib/client.js` 上（有 `.bak`），DSH 升级会被覆盖，
-  重跑 `node scripts/patch-sidebar-icon.mjs` 即可；不跑也只是图标退回默认齿轮。
+- **侧栏图标是运行时 Pin**：只改 DOM、不落盘，也不碰 DSH runtime 的文件（不再有
+  `scripts/patch-sidebar-icon.mjs`，也没有 `.bak` 要还原）。若官方外壳换成非
+  `nav > button` 结构，Pin 找不到自己的格子，图标就保持默认齿轮 —— 功能不受损，
+  收纳与点击代理本来就不依赖 svg。
 
 ## 回滚
 
@@ -313,9 +319,9 @@ node scripts/rollback-profile.mjs   # 只摘本插件的痕迹；若安装后没
 | `lib/inventory.js` | 宿主侧纯逻辑：spec 归类、bundle 分页提取、profile 清单、分页→包的分组 |
 | `lib/pins.js` | 固定项存储：读写 `plugin-data/…/pins.json`（原子写、按 profile 分桶） |
 | `lib/index.js` | 宿主插件：三个 HTTP 端点 + 动作头校验 |
-| `lib/client.js` | 浏览器半边：收纳分页注册、左侧栏观察器、点击代理、收纳页与手工选择区 |
+| `lib/client.js` | 浏览器半边：收纳分页注册、左侧栏观察器、点击代理、收纳页与手工选择区、侧栏图标运行时 Pin（`pinNavGlyph`/`navGlyph`） |
 | `cordis.patch.yml` | bundle patch：把宿主半边挂进 profile |
-| `scripts/` | profile 改动的单一实现 + 安装/回滚脚本 + 市场投稿脚本 + 侧栏图标补丁 |
+| `scripts/` | profile 改动的单一实现 + 安装/回滚脚本 + 市场投稿脚本 |
 | `market/` | awesome-dsh-plugin（市场列表数据源）的收录条目，一个文件就是全部投稿 |
 
 ## 许可
