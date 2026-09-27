@@ -38,17 +38,17 @@ after(() => {
   rmSync(rootDataDir, { recursive: true, force: true });
 });
 
-/** 左侧栏账本（与真实机器上的形状一致：5 个内置 + 2 个第三方 + 本插件自己的入口）。 */
+/** 左侧栏账本（DSH 0.1.7 形状：registrant 挂条目顶层；5 个内置 + 2 个第三方 + 本插件自己的入口）。 */
 const LEDGER = [
-  { options: { id: 'general', label: () => '通用', order: 0, registrant: 'ui-settings-general' } },
-  { options: { id: 'models', label: () => '模型', order: 10, registrant: 'ui-settings-models' } },
-  { options: { id: 'vision', label: () => '视觉助手', order: 11, registrant: 'dsh-vision-assistant' } },
-  { options: { id: 'plugins', label: () => '内置插件', order: 15, registrant: 'ui-settings-plugins' } },
-  { options: { id: 'agent-presets', label: () => 'Agent 预设', order: 20, registrant: 'ui-agent-preset' } },
-  { options: { id: 'archived-sessions', label: () => '归档会话', order: 25, registrant: 'ui-settings-unarchive-sessions' } },
-  { options: { id: 'cost-meter', label: () => '用量计费', order: 30, registrant: 'dsh-cost-meter' } },
-  { options: { id: 'better-display', label: () => '界面增强', order: 40, registrant: 'dsh-better-display-client' } },
-  { options: { id: 'third-party-plugins', label: () => '第三方插件', order: 1000, registrant: 'dsh-settings-plugin-hub-client' } },
+  { options: { id: 'general', label: () => '通用', order: 0 }, registrant: 'ui-settings-general' },
+  { options: { id: 'models', label: () => '模型', order: 10 }, registrant: 'ui-settings-models' },
+  { options: { id: 'vision', label: () => '视觉助手', order: 11 }, registrant: 'dsh-vision-assistant' },
+  { options: { id: 'plugins', label: () => '内置插件', order: 15 }, registrant: 'ui-settings-plugins' },
+  { options: { id: 'agent-presets', label: () => 'Agent 预设', order: 20 }, registrant: 'ui-agent-preset' },
+  { options: { id: 'archived-sessions', label: () => '归档会话', order: 25 }, registrant: 'ui-settings-unarchive-sessions' },
+  { options: { id: 'cost-meter', label: () => '用量计费', order: 30 }, registrant: 'dsh-cost-meter' },
+  { options: { id: 'better-display', label: () => '界面增强', order: 40 }, registrant: 'dsh-better-display-client' },
+  { options: { id: 'third-party-plugins', label: () => '第三方插件', order: 1000 }, registrant: 'dsh-settings-plugin-hub-client' },
 ];
 
 const DOM_ROWS = LEDGER.map((entry) => ({ label: entry.options.label() }));

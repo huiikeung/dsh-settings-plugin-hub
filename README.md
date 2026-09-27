@@ -94,6 +94,9 @@ DeepSeek Harness Web profile 插件：**设置左侧栏收纳 + 手工固定**�
 - 同一个分页 id 被多个包抢注时（例如 `vision` 同时属于 `dsh-vision-assistant` 与已停用的
   `dsh-vision-opencode`），优先用 `registrant`（客户端 Loader 的 fiber 名）匹配，其次排除
   profile `cordis.patch.yml` 里被停用的包。
+- **DSH 版本兼容**（v0.2.6 起）：0.1.7 把 slot 条目的 `registrant` 从 `entry.options` 挪到了
+  条目顶层，客户端半边对两种形状都做了兼容读取；官方 `account` 分页（不在 profile 依赖里、
+  靠 registrant 的 `@deepseek-ai/` 前缀兜底判内置）因此不会被误收进收纳页。
 - 归属不到任何已安装包的分页落进「来源未识别」，**仍然会被收纳**，只是来源不打标。
 
 所有端点都要求动作头 `x-settings-plugin-hub-action`（`webServer` 路由不带浏览器会话鉴权，

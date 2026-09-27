@@ -45,9 +45,9 @@ function createFakeWindow(extra = {}) {
   };
 }
 
-/** 左侧栏账本条目（形状同 ctx.slots.entries('settings.section')）。 */
+/** 左侧栏账本条目（形状同 ctx.slots.entries('settings.section')，DSH 0.1.7 起 registrant 挂条目顶层）。 */
 function entry(id, label, order, registrant) {
-  return { options: { id, label: () => label, order, ...(registrant === undefined ? {} : { registrant }) } };
+  return { options: { id, label: () => label, order }, ...(registrant === undefined ? {} : { registrant }) };
 }
 
 const LEDGER = [
@@ -124,6 +124,22 @@ describe('账本投影 rowsFromEntries', () => {
     const { exports } = loadClientBundle();
     const rows = exports.__internals.rowsFromEntries([{ options: { id: 'x', label: () => { throw new Error('boom'); } } }]);
     assert.equal(rows[0].label, '');
+  });
+
+  it('registrant 新旧两种位置都读：0.1.7 条目顶层优先，0.1.6 options 回退', () => {
+    const { exports } = loadClientBundle();
+    const rows = exports.__internals.rowsFromEntries([
+      entry('new', '新版', 10, 'dsh-vision-assistant'),
+      { options: { id: 'old', label: '旧版', order: 20, registrant: 'dsh-cost-meter' } },
+      { options: { id: 'both', label: '两处', order: 30 }, registrant: 'dsh-interactive-reader', },
+      { options: { id: 'none', label: '没有', order: 40 } },
+    ]);
+    assert.deepEqual(rows.map((row) => row.registrant), [
+      'dsh-vision-assistant',
+      'dsh-cost-meter',
+      'dsh-interactive-reader',
+      '',
+    ]);
   });
 });
 

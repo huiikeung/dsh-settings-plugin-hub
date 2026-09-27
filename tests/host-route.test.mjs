@@ -118,9 +118,9 @@ describe('宿主端点 /settings-plugin-hub', () => {
     assert.equal(body.ok, true, body.error);
     assert.equal(body.profile, 'web');
     const byName = new Map(body.packages.map((pkg) => [pkg.name, pkg]));
-    assert.equal(byName.get('dsh-better-display').source, 'local');
+    assert.equal(byName.get('dsh-omnisearch').source, 'local');
     assert.equal(byName.get('dsh-cost-meter').source, 'remote');
-    assert.equal(byName.get('dsh-better-display').spec, 'link:dsh-better-display');
+    assert.equal(byName.get('dsh-omnisearch').spec, 'link:dsh-omnisearch');
     assert.ok(!JSON.stringify(body).includes(REAL_PROFILE_DIR), '应答里不应出现 profile 绝对路径');
     assert.ok(!JSON.stringify(body).includes('/vol1/1000/Deepseek-Harness'), '应答里不应出现本地插件目录');
   });
@@ -132,7 +132,11 @@ describe('宿主端点 /settings-plugin-hub', () => {
       { id: 'vision', label: '视觉助手', order: 11, registrant: 'dsh-vision-assistant' },
       { id: 'plugins', label: '内置插件', order: 15, registrant: 'ui-settings-plugins' },
       { id: 'cost-meter', label: '用量', order: 30, registrant: 'dsh-cost-meter' },
-      { id: 'better-display', label: '界面增强', order: 40, registrant: 'dsh-better-display-client' },
+      { id: 'market', label: '插件市场', order: 35, registrant: 'dshmarket' },
+      { id: 'mnemon', label: '记忆', order: 36, registrant: 'dsh-mnemon' },
+      { id: 'omnisearch', label: '联网搜索', order: 37, registrant: 'dsh-omnisearch' },
+      { id: 'interactive-reader', label: '交互阅读', order: 38, registrant: 'dsh-interactive-reader' },
+      { id: 'mobile-gateway', label: '微信网关', order: 39, registrant: 'dsh-plugin-weapp-gateway' },
       { id: 'third-party-plugins', label: '第三方插件', order: 1000, registrant: 'dsh-settings-plugin-hub-client' },
     ];
     const response = await fetch(url('/settings-plugin-hub/resolve'), {
@@ -144,10 +148,10 @@ describe('宿主端点 /settings-plugin-hub', () => {
     const body = await response.json();
     assert.equal(body.ok, true);
     assert.deepEqual(body.builtin.sort(), ['general', 'models', 'plugins']);
-    assert.deepEqual(body.groups.local.map((item) => item.id).sort(), ['better-display', 'vision']);
-    assert.deepEqual(body.groups.remote.map((item) => item.id), ['cost-meter']);
+    assert.deepEqual(body.groups.local.map((item) => item.id).sort(), ['interactive-reader', 'mobile-gateway', 'omnisearch', 'vision']);
+    assert.deepEqual(body.groups.remote.map((item) => item.id).sort(), ['cost-meter', 'market', 'mnemon']);
     assert.deepEqual(body.groups.unknown, []);
-    assert.deepEqual(body.hiddenIds.sort(), ['better-display', 'cost-meter', 'vision']);
+    assert.deepEqual(body.hiddenIds.sort(), ['cost-meter', 'interactive-reader', 'market', 'mnemon', 'mobile-gateway', 'omnisearch', 'vision']);
     assert.ok(!body.hiddenIds.includes('third-party-plugins'));
     // hiddenIds 是「应被收纳的全集」；减去 pins 由浏览器半边完成（固定/取消要立即生效，
     // 不能等一次往返）。这里只保证固定项随 resolve 一起下发。

@@ -339,7 +339,7 @@ describe('真机 profile 只读校验', () => {
     const byName = new Map(inventory.packages.map((pkg) => [pkg.name, pkg]));
 
     // 本地 link 安装的插件
-    for (const name of ['dsh-better-display', 'dsh-vision-assistant', 'dsh-my-plugins', 'dsh-settings-mobile-nav']) {
+    for (const name of ['dsh-vision-assistant', 'dsh-omnisearch', 'dsh-interactive-reader', 'dsh-settings-mobile-nav']) {
       const pkg = byName.get(name);
       assert.ok(pkg, `${name} 应在 profile 依赖里`);
       assert.equal(pkg.source, 'local', `${name} 是 link: 本地安装`);
@@ -350,11 +350,10 @@ describe('真机 profile 只读校验', () => {
       assert.ok(pkg, `${name} 应在 profile 依赖里`);
       assert.equal(pkg.source, 'remote', `${name} 是注册表安装`);
     }
-    // 分页归属：vision 同时被 dsh-vision-assistant 与已停用的 dsh-vision-opencode 抢注
+    // 分页归属（vision 如今只有 dsh-vision-assistant 一个注册者）
     assert.deepEqual(byName.get('dsh-vision-assistant').sectionIds, ['vision']);
-    assert.equal(byName.get('dsh-vision-opencode').disabled, true);
     assert.deepEqual(byName.get('dsh-cost-meter').sectionIds, ['cost-meter', 'cost-meter-usage']);
-    assert.deepEqual(byName.get('dsh-better-display').sectionIds, ['better-display']);
+    assert.deepEqual(byName.get('dshmarket').sectionIds, ['market']);
 
     const sections = [
       { id: 'general', label: '通用', order: 0, registrant: 'ui-settings-general' },
@@ -364,13 +363,17 @@ describe('真机 profile 只读校验', () => {
       { id: 'agent-presets', label: 'Agent 预设', order: 20, registrant: 'ui-agent-preset' },
       { id: 'archived-sessions', label: '归档会话', order: 25, registrant: 'ui-settings-unarchive-sessions' },
       { id: 'cost-meter', label: '用量', order: 30, registrant: 'dsh-cost-meter' },
-      { id: 'better-display', label: '界面增强', order: 40, registrant: 'dsh-better-display-client' },
+      { id: 'market', label: '插件市场', order: 35, registrant: 'dshmarket' },
+      { id: 'mnemon', label: '记忆', order: 36, registrant: 'dsh-mnemon' },
+      { id: 'omnisearch', label: '联网搜索', order: 37, registrant: 'dsh-omnisearch' },
+      { id: 'interactive-reader', label: '交互阅读', order: 38, registrant: 'dsh-interactive-reader' },
+      { id: 'mobile-gateway', label: '微信网关', order: 39, registrant: 'dsh-plugin-weapp-gateway' },
       { id: HUB_SECTION_ID, label: '第三方插件', order: 1000, registrant: 'dsh-settings-plugin-hub-client' },
     ];
     const result = classifySections(sections, inventory);
     assert.deepEqual(result.builtin.sort(), ['agent-presets', 'archived-sessions', 'general', 'models', 'plugins']);
-    assert.deepEqual(result.groups.local.map((item) => item.id).sort(), ['better-display', 'vision']);
-    assert.deepEqual(result.groups.remote.map((item) => item.id), ['cost-meter']);
+    assert.deepEqual(result.groups.local.map((item) => item.id).sort(), ['interactive-reader', 'mobile-gateway', 'omnisearch', 'vision']);
+    assert.deepEqual(result.groups.remote.map((item) => item.id).sort(), ['cost-meter', 'market', 'mnemon']);
     assert.deepEqual(result.groups.unknown, []);
   });
 
