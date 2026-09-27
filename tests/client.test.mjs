@@ -310,7 +310,7 @@ describe('与宿主对话 resolveNow', () => {
     assert.equal(snapshot.groups.local.length, 2);
     assert.equal(buttons[2].style.display, 'none');
     assert.equal(fetchCalls.length, 1);
-    assert.equal(fetchCalls[0].url, '/settings-plugin-hub/resolve');
+    assert.equal(fetchCalls[0].url, 'settings-plugin-hub/resolve');
     assert.equal(fetchCalls[0].init.method, 'POST');
     assert.equal(fetchCalls[0].init.headers['x-settings-plugin-hub-action'], 'resolve');
     const payload = JSON.parse(fetchCalls[0].init.body);
@@ -593,7 +593,7 @@ describe('固定在左侧栏显示', () => {
     api.togglePinned('better-display');
     await settle();
     assert.equal(fetchCalls.length, 1);
-    assert.equal(fetchCalls[0].url, '/settings-plugin-hub/pins');
+    assert.equal(fetchCalls[0].url, 'settings-plugin-hub/pins');
     assert.equal(fetchCalls[0].init.method, 'PUT');
     assert.equal(fetchCalls[0].init.headers['x-settings-plugin-hub-action'], 'pins');
     assert.equal(fetchCalls[0].init.headers['content-type'], 'application/json');

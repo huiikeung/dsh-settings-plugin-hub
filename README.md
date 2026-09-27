@@ -97,6 +97,11 @@ DeepSeek Harness Web profile 插件：**设置左侧栏收纳 + 手工固定**�
 - **DSH 版本兼容**（v0.2.6 起）：0.1.7 把 slot 条目的 `registrant` 从 `entry.options` 挪到了
   条目顶层，客户端半边对两种形状都做了兼容读取；官方 `account` 分页（不在 profile 依赖里、
   靠 registrant 的 `@deepseek-ai/` 前缀兜底判内置）因此不会被误收进收纳页。
+- **浏览器路由文档相对**（v0.2.7 起）：DSH 2026-09-14 起浏览器侧路由一律按文档基址解析
+  （官方 combo 引用就是 `plugins/??...` 相对写法），应用可被 fnOS 网关等反代挂在任意前缀下
+  （`/app/deepseek-harness/...`）。客户端 fetch 的 `API_BASE` 相应去掉了前导斜杠 —— 否则在
+  带前缀的部署里请求会打到反代根上拿回 HTML 壳（fetch 解析 JSON 报 `Unexpected token '<'`），
+  直连部署（根路径）则两种写法都正常。
 - 归属不到任何已安装包的分页落进「来源未识别」，**仍然会被收纳**，只是来源不打标。
 
 所有端点都要求动作头 `x-settings-plugin-hub-action`（`webServer` 路由不带浏览器会话鉴权，

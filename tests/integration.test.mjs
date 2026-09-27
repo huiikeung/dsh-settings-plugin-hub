@@ -80,10 +80,14 @@ function mountHost(dataDir) {
   return routes;
 }
 
-/** 把 fetch(url, init) 转发给宿主真实 handler，返回 {status, json()}。 */
+/** 把 fetch(url, init) 转发给宿主真实 handler，返回 {status, json()}。
+ *  客户端发的是文档相对路径（settings-plugin-hub/...，无前导斜杠）；真实浏览器会
+ *  先按文档基址解析成绝对 URL 再发给服务端，服务端看到的是带斜杠的路径 —— 桥接
+ *  在这里补上这一步解析。 */
 function bridgeFetch(routes) {
   return (url, init = {}) => {
-    const route = routes.get(url);
+    const key = url.startsWith('/') ? url : `/${url}`;
+    const route = routes.get(key);
     if (route === undefined) return Promise.reject(new Error(`no route for ${url}`));
     const request = asyncIteratorOf(init.body ?? '');
     request.method = init.method ?? 'GET';
