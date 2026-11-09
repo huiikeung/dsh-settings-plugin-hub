@@ -103,8 +103,8 @@ DeepSeek Harness Web profile 插件：**设置左侧栏收纳 + 手工固定**�
   带前缀的部署里请求会打到反代根上拿回 HTML 壳（fetch 解析 JSON 报 `Unexpected token '<'`），
   直连部署（根路径）则两种写法都正常。
 - **0.2.x 官方分页对齐**（v0.2.8 起）：DSH 0.2.2 官方新增「账号」页（`ui-settings-account`，
-  id `account`），已进内置白名单；另按约定把 dsh-cost-meter 的「用量/余额」页
-  （`cost-meter` / `cost-meter-usage`）也视作内置留在原生位置，不进收纳页。
+  id `account`），已进内置白名单。（v0.2.10 起：dsh-cost-meter 的用量/费用页曾短暂进过
+  白名单，现按用户确认改回**按来源自动识别**——它是第三方插件，正常收纳进分组页。）
 - **0.2.x 导航按钮形状**（v0.2.9 起）：0.2 的设置侧栏按钮把图标从裸 `<svg>` 改成
   `<span class="navIcon">` 包裹，`buttonLabel` 原来读「第一个直接子 span」会拿到空文本的
   图标壳 → `isSettingsRail` 找不到本插件入口而整体放弃收纳（左侧栏保持原状）。现在改读
