@@ -147,11 +147,12 @@ describe('宿主端点 /settings-plugin-hub', () => {
     assert.equal(response.status, 200);
     const body = await response.json();
     assert.equal(body.ok, true);
-    assert.deepEqual(body.builtin.sort(), ['general', 'models', 'plugins']);
-    assert.deepEqual(body.groups.local.map((item) => item.id).sort(), ['interactive-reader', 'mobile-gateway', 'omnisearch', 'vision']);
-    assert.deepEqual(body.groups.remote.map((item) => item.id).sort(), ['cost-meter', 'market', 'mnemon']);
+    assert.deepEqual(body.builtin.sort(), ['cost-meter', 'general', 'models', 'plugins']);
+    // mobile-gateway 现在是 github: 安装（不再是 link:），归远程。
+    assert.deepEqual(body.groups.local.map((item) => item.id).sort(), ['interactive-reader', 'omnisearch', 'vision']);
+    assert.deepEqual(body.groups.remote.map((item) => item.id).sort(), ['market', 'mnemon', 'mobile-gateway']);
     assert.deepEqual(body.groups.unknown, []);
-    assert.deepEqual(body.hiddenIds.sort(), ['cost-meter', 'interactive-reader', 'market', 'mnemon', 'mobile-gateway', 'omnisearch', 'vision']);
+    assert.deepEqual(body.hiddenIds.sort(), ['interactive-reader', 'market', 'mnemon', 'mobile-gateway', 'omnisearch', 'vision']);
     assert.ok(!body.hiddenIds.includes('third-party-plugins'));
     // hiddenIds 是「应被收纳的全集」；减去 pins 由浏览器半边完成（固定/取消要立即生效，
     // 不能等一次往返）。这里只保证固定项随 resolve 一起下发。
@@ -172,13 +173,14 @@ describe('宿主端点 /settings-plugin-hub', () => {
       body: JSON.stringify({
         sections: [
           { id: 'vision', label: '视觉助手', order: 11, registrant: 'dsh-vision-assistant' },
-          { id: 'cost-meter', label: '用量', order: 30, registrant: 'dsh-cost-meter' },
+          { id: 'mnemon', label: '记忆', order: 36, registrant: 'dsh-mnemon' },
         ],
       }),
     });
     const body = await response.json();
     assert.deepEqual(body.pins, ['vision']);
-    assert.deepEqual(body.hiddenIds.sort(), ['cost-meter', 'vision']);
+    // cost-meter 已进内置白名单（v0.2.8），这里换 mnemon 当被收纳的远程例子。
+    assert.deepEqual(body.hiddenIds.sort(), ['mnemon', 'vision']);
     // 复位，避免影响后续用例
     await fetch(url('/settings-plugin-hub/pins'), {
       method: 'PUT',

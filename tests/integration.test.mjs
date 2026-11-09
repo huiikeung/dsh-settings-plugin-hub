@@ -46,7 +46,7 @@ const LEDGER = [
   { options: { id: 'plugins', label: () => '内置插件', order: 15 }, registrant: 'ui-settings-plugins' },
   { options: { id: 'agent-presets', label: () => 'Agent 预设', order: 20 }, registrant: 'ui-agent-preset' },
   { options: { id: 'archived-sessions', label: () => '归档会话', order: 25 }, registrant: 'ui-settings-unarchive-sessions' },
-  { options: { id: 'cost-meter', label: () => '用量计费', order: 30 }, registrant: 'dsh-cost-meter' },
+  { options: { id: 'mnemon', label: () => '记忆', order: 30 }, registrant: 'dsh-mnemon' },
   { options: { id: 'better-display', label: () => '界面增强', order: 40 }, registrant: 'dsh-better-display-client' },
   { options: { id: 'third-party-plugins', label: () => '第三方插件', order: 1000 }, registrant: 'dsh-settings-plugin-hub-client' },
 ];
@@ -200,10 +200,10 @@ describe('两端对接 + 固定项持久化', { skip: !hasProfile }, () => {
     const hidden = (label) => first.buttons[DOM_ROWS.findIndex((row) => row.label === label)].style.display;
     assert.equal(first.api.getState().status, 'ready', first.api.getState().error);
 
-    // 1. 第三方分页被收纳，内置的留在原地
+    // 1. 第三方分页被收纳，内置的留在原地（cost-meter 用量/余额自 v0.2.8 也是内置白名单）
     assert.equal(hidden('视觉助手'), 'none');
     assert.equal(hidden('界面增强'), 'none');
-    assert.equal(hidden('用量计费'), 'none');
+    assert.equal(hidden('记忆'), 'none');
     for (const label of ['通用', '模型', '内置插件', 'Agent 预设', '归档会话']) {
       assert.notEqual(hidden(label), 'none', `${label} 是内置分页，必须留在左侧栏`);
     }

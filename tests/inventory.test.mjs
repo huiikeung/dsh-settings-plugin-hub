@@ -371,9 +371,11 @@ describe('真机 profile 只读校验', () => {
       { id: HUB_SECTION_ID, label: '第三方插件', order: 1000, registrant: 'dsh-settings-plugin-hub-client' },
     ];
     const result = classifySections(sections, inventory);
-    assert.deepEqual(result.builtin.sort(), ['agent-presets', 'archived-sessions', 'general', 'models', 'plugins']);
-    assert.deepEqual(result.groups.local.map((item) => item.id).sort(), ['interactive-reader', 'mobile-gateway', 'omnisearch', 'vision']);
-    assert.deepEqual(result.groups.remote.map((item) => item.id).sort(), ['cost-meter', 'market', 'mnemon']);
+    // cost-meter（用量/余额）自 v0.2.8 起按用户约定进内置白名单，与账号一样留在原生位置。
+    assert.deepEqual(result.builtin.sort(), ['agent-presets', 'archived-sessions', 'cost-meter', 'general', 'models', 'plugins']);
+    // mobile-gateway 现在是 github: 安装（不再是 link:），归远程。
+    assert.deepEqual(result.groups.local.map((item) => item.id).sort(), ['interactive-reader', 'omnisearch', 'vision']);
+    assert.deepEqual(result.groups.remote.map((item) => item.id).sort(), ['market', 'mnemon', 'mobile-gateway']);
     assert.deepEqual(result.groups.unknown, []);
   });
 

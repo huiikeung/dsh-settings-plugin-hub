@@ -102,6 +102,9 @@ DeepSeek Harness Web profile 插件：**设置左侧栏收纳 + 手工固定**�
   （`/app/deepseek-harness/...`）。客户端 fetch 的 `API_BASE` 相应去掉了前导斜杠 —— 否则在
   带前缀的部署里请求会打到反代根上拿回 HTML 壳（fetch 解析 JSON 报 `Unexpected token '<'`），
   直连部署（根路径）则两种写法都正常。
+- **0.2.x 官方分页对齐**（v0.2.8 起）：DSH 0.2.2 官方新增「账号」页（`ui-settings-account`，
+  id `account`），已进内置白名单；另按约定把 dsh-cost-meter 的「用量/余额」页
+  （`cost-meter` / `cost-meter-usage`）也视作内置留在原生位置，不进收纳页。
 - 归属不到任何已安装包的分页落进「来源未识别」，**仍然会被收纳**，只是来源不打标。
 
 所有端点都要求动作头 `x-settings-plugin-hub-action`（`webServer` 路由不带浏览器会话鉴权，
