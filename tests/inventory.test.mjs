@@ -216,6 +216,30 @@ describe('resolveProfileDir', () => {
     mkdirSync(join(home, 'profiles', 'empty'), { recursive: true });
     assert.equal(resolveProfileDir({ env: { DSH_HOME: home }, profile: 'web' }), join(home, 'profiles', 'desktop'));
   });
+
+  it('selfUrl 自定位优先：反推出真正运行中的 profile（桌面端多 profile 不再猜错）', () => {
+    const home = tempDir('hub-self-');
+    // 一个「诱饵」profile：名字叫 desktop、package.json 存在但没有依赖本插件。
+    mkdirSync(join(home, 'profiles', 'desktop'), { recursive: true });
+    writeFileSync(join(home, 'profiles', 'desktop', 'package.json'), '{}');
+    // 真实运行中的 profile：宿主半边模块躺在它的 node_modules 里。
+    const real = join(home, 'profiles', 'app');
+    mkdirSync(join(real, 'node_modules', 'dsh-settings-plugin-hub', 'lib'), { recursive: true });
+    writeFileSync(join(real, 'package.json'), JSON.stringify({ dependencies: { 'dsh-settings-plugin-hub': 'link:.' } }));
+    writeFileSync(join(real, 'node_modules', 'dsh-settings-plugin-hub', 'lib', 'index.js'), 'export {}');
+    const selfUrl = new URL(join(real, 'node_modules', 'dsh-settings-plugin-hub', 'lib', 'index.js').replace(/\\/g, '/'), 'file:///');
+    assert.equal(resolveProfileDir({ env: { DSH_HOME: home }, profile: 'web', selfUrl: selfUrl.href }), real);
+  });
+
+  it('selfUrl 反推必须通过依赖校验（.pnpm 布局误命中被拒，回退到按名字解析）', () => {
+    const home = tempDir('hub-pnpm-');
+    const store = join(home, 'profiles', 'app', '.pnpm', 'dsh-x@1', 'node_modules', 'dsh-settings-plugin-hub', 'lib');
+    mkdirSync(store, { recursive: true });
+    const selfUrl = new URL(join(store, 'index.js').replace(/\\/g, '/'), 'file:///');
+    const resolved = resolveProfileDir({ env: { DSH_HOME: home }, profile: 'web', selfUrl: selfUrl.href });
+    assert.ok(!resolved.includes('.pnpm'), '绝不能落到 .pnpm 虚拟store目录');
+    assert.ok(resolved.endsWith(join('profiles', 'web')), `回退到按名字解析的候选：${resolved}`);
+  });
 });
 
 describe('resolveDshHome', () => {
