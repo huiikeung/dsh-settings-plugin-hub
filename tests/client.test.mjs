@@ -289,6 +289,28 @@ describe('DOM：收纳左侧栏', () => {
     };
     assert.equal(api.buttonLabel(broken), '甲');
   });
+
+  it('buttonLabel 兼容 0.2.x 图标壳：无文本的 span 不遮住真正的标签（v0.2.9 回归）', () => {
+    const { document, buttons } = createSettingsDialog(DOM_ROWS, 'dsh02');
+    const { exports } = loadClientBundle({ document });
+    const api = exports.__internals;
+    // 0.2.x 按钮子节点 [span.navIcon(空) > svg, span.navLabel]：
+    // 第一个直接子 span 是图标壳，textContent 为空 —— 旧实现会拿到空串，
+    // isSettingsRail 找不到「第三方插件」行而整体放弃收纳。
+    assert.equal(buttons[0].children.filter((c) => c.tagName === 'SPAN')[0].textContent, '');
+    for (let i = 0; i < buttons.length; i++) {
+      assert.equal(api.buttonLabel(buttons[i]), DOM_ROWS[i].label, `第 ${i} 个按钮标签`);
+    }
+  });
+
+  it('buttonLabel 兼容 0.1.x 裸 svg + 单 span 形状', () => {
+    const { document, buttons } = createSettingsDialog(DOM_ROWS, 'dsh01');
+    const { exports } = loadClientBundle({ document });
+    const api = exports.__internals;
+    for (let i = 0; i < buttons.length; i++) {
+      assert.equal(api.buttonLabel(buttons[i]), DOM_ROWS[i].label);
+    }
+  });
 });
 
 describe('与宿主对话 resolveNow', () => {

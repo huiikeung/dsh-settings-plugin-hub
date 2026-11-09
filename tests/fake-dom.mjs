@@ -75,8 +75,7 @@ export class FakeElement {
 
   querySelectorAll(selector) {
     if (selector === ":scope > span") {
-      const span = this.children.find((child) => child.tagName === "SPAN");
-      return span === undefined ? [] : [span];
+      return this.children.filter((child) => child.tagName === "SPAN");
     }
     return this.descendants().filter((node) => matches(node, selector));
   }
@@ -119,7 +118,7 @@ function attributeMatches(node, name, value) {
  * @param {Array<{label: string}>} rows - 左侧栏按钮的显示名（顺序即 DOM 顺序）。
  * @returns {{document: FakeElement, dialog: FakeElement, nav: FakeElement, buttons: FakeElement[]}}
  */
-export function createSettingsDialog(rows) {
+export function createSettingsDialog(rows, shape = 'dsh02') {
   const document = createFakeDocument();
   const dialog = document.body.appendChild(new FakeElement("div"));
   dialog.setAttribute("role", "dialog");
@@ -131,9 +130,18 @@ export function createSettingsDialog(rows) {
   /** @type {FakeElement[]} */
   const buttons = rows.map((row) => {
     const button = list.appendChild(new FakeElement("button"));
-    button.appendChild(new FakeElement("svg"));
-    const span = button.appendChild(new FakeElement("span"));
-    span.textContent = row.label;
+    if (shape === 'dsh02') {
+      // DSH 0.2.x：图标包在无文本的 span 壳里，标签是第二个直接子 span。
+      const iconShell = button.appendChild(new FakeElement("span"));
+      iconShell.appendChild(new FakeElement("svg"));
+      const span = button.appendChild(new FakeElement("span"));
+      span.textContent = row.label;
+    } else {
+      // DSH 0.1.x：裸 svg + 单个标签 span。
+      button.appendChild(new FakeElement("svg"));
+      const span = button.appendChild(new FakeElement("span"));
+      span.textContent = row.label;
+    }
     return button;
   });
   return { document, dialog, nav, buttons };

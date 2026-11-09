@@ -105,6 +105,10 @@ DeepSeek Harness Web profile 插件：**设置左侧栏收纳 + 手工固定**�
 - **0.2.x 官方分页对齐**（v0.2.8 起）：DSH 0.2.2 官方新增「账号」页（`ui-settings-account`，
   id `account`），已进内置白名单；另按约定把 dsh-cost-meter 的「用量/余额」页
   （`cost-meter` / `cost-meter-usage`）也视作内置留在原生位置，不进收纳页。
+- **0.2.x 导航按钮形状**（v0.2.9 起）：0.2 的设置侧栏按钮把图标从裸 `<svg>` 改成
+  `<span class="navIcon">` 包裹，`buttonLabel` 原来读「第一个直接子 span」会拿到空文本的
+  图标壳 → `isSettingsRail` 找不到本插件入口而整体放弃收纳（左侧栏保持原状）。现在改读
+  「最后一个非空文本的直接子 span」，退回整格 `textContent`，0.1.x / 0.2.x 通吃。
 - 归属不到任何已安装包的分页落进「来源未识别」，**仍然会被收纳**，只是来源不打标。
 
 所有端点都要求动作头 `x-settings-plugin-hub-action`（`webServer` 路由不带浏览器会话鉴权，
