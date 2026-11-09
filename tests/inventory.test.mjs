@@ -327,7 +327,7 @@ describe('readProfileInventory + classifySections', () => {
     return { root, profileDir, localSource };
   }
 
-  it('把 link 包判为 local、注册表包判为 remote、软链逃逸也判为 local', () => {
+  it('把 link 包判为 local、注册表包判为 remote', () => {
     const { profileDir, localSource } = buildFixtureProfile();
     const inventory = readProfileInventory(profileDir);
     assert.equal(inventory.ok, true);
@@ -347,6 +347,62 @@ describe('readProfileInventory + classifySections', () => {
     const inventory = readProfileInventory(profileDir);
     const shadow = inventory.packages.find((pkg) => pkg.name === 'dsh-shadow-thing');
     assert.equal(shadow.disabled, true, 'patch 用条目 id shadow-thing 停用，包名匹配不上也要判出停用');
+  });
+
+  it('v0.2.13 回归：来源只认 spec —— 注册表/github 包永远 remote，spec 说不清才是 unknown', () => {
+    const root = tempDir('hub-spec-');
+    const profileDir = join(root, 'profiles', 'web');
+    const localModules = join(profileDir, 'node_modules');
+    mkdirSync(localModules, { recursive: true });
+
+    // 在线安装形态一：语义化版本 spec + pnpm store 真目录。
+    const onlineDir = join(localModules, '.pnpm-store', 'dsh-online-thing');
+    mkdirSync(join(onlineDir, 'lib'), { recursive: true });
+    writeFileSync(join(onlineDir, 'package.json'), JSON.stringify({
+      name: 'dsh-online-thing',
+      exports: { './client': './lib/client.js' },
+      dsh: { client: { platform: 'web' } },
+    }));
+    writeFileSync(join(onlineDir, 'lib', 'client.js'),
+      'window.__ModuleLoader__.load({id:"dsh-online-thing",factory:()=>{ctx.slots.register({name:"settings.section",id:"online-thing",order:50},C)}});');
+
+    // 在线安装形态二：github: spec + 软链指向 profile 外（pnpm 对 git 依赖的物化）。
+    const gitDir = join(root, 'store', 'dsh-git-thing');
+    mkdirSync(join(gitDir, 'lib'), { recursive: true });
+    writeFileSync(join(gitDir, 'package.json'), JSON.stringify({
+      name: 'dsh-git-thing',
+      exports: { './client': './lib/client.js' },
+      dsh: { client: { platform: 'web' } },
+    }));
+    writeFileSync(join(gitDir, 'lib', 'client.js'),
+      'window.__ModuleLoader__.load({id:"dsh-git-thing",factory:()=>{ctx.slots.register({name:"settings.section",id:"git-thing",order:51},C)}});');
+    symlinkSync(gitDir, join(localModules, 'dsh-git-thing'), 'dir');
+
+    // spec 说不清（空串）+ 软链在外：unknown（不猜）。
+    const mysteryDir = join(root, 'elsewhere', 'dsh-mystery-thing');
+    mkdirSync(join(mysteryDir, 'lib'), { recursive: true });
+    writeFileSync(join(mysteryDir, 'package.json'), JSON.stringify({
+      name: 'dsh-mystery-thing',
+      exports: { './client': './lib/client.js' },
+      dsh: { client: { platform: 'web' } },
+    }));
+    writeFileSync(join(mysteryDir, 'lib', 'client.js'),
+      'window.__ModuleLoader__.load({id:"dsh-mystery-thing",factory:()=>{ctx.slots.register({name:"settings.section",id:"mystery-thing",order:52},C)}});');
+    symlinkSync(mysteryDir, join(localModules, 'dsh-mystery-thing'), 'dir');
+
+    writeFileSync(join(profileDir, 'package.json'), JSON.stringify({
+      name: 'dsh-profile-web',
+      private: true,
+      dependencies: { 'dsh-online-thing': '^3.0.0', 'dsh-git-thing': 'github:a/b', 'dsh-mystery-thing': '' },
+      dsh: { profile: { bundles: ['dsh-online-thing', 'dsh-git-thing', 'dsh-mystery-thing'] } },
+    }));
+
+    const inventory = readProfileInventory(profileDir);
+    assert.equal(inventory.ok, true, inventory.error);
+    const byName = new Map(inventory.packages.map((pkg) => [pkg.name, pkg]));
+    assert.equal(byName.get('dsh-online-thing').source, 'remote');
+    assert.equal(byName.get('dsh-git-thing').source, 'remote', 'github: 物化成外置软链也保持 remote');
+    assert.equal(byName.get('dsh-mystery-thing').source, 'unknown', 'spec 说不出来源就不猜');
   });
 
   it('分组：内置留在原地，第三方按来源落组，同 id 抢注时优先未停用/registrant 匹配的那个', () => {

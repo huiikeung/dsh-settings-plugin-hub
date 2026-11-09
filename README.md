@@ -87,8 +87,11 @@ DeepSeek Harness Web profile 插件：**设置左侧栏收纳 + 手工固定**�
 
 判定规则（`lib/inventory.js`）：
 
-- `link:` / `file:` / 绝对路径 / `workspace:` ⇒ **本地**；语义化版本 / `github:` / tarball ⇒ **非本地**；
-  另外用 `node_modules/<pkg>` 的 realpath 做第二判据（pnpm 把 `link:` 物化成指向 profile 之外的软链）。
+- `link:` / `file:` / 绝对路径 / `workspace:` ⇒ **本地**；语义化版本 / `npm:` / `github:` / tarball ⇒ **非本地**；
+  spec 说不出来源 ⇒ **来源未识别**（仍然收纳，只是不打标）。
+  v0.2.13 起 spec 是唯一事实来源 —— 不再用 realpath 是否逃逸 node_modules 翻案
+  （该启发式在 Windows 的分隔符/盘符大小写/junction 差异下会把在线安装的包
+  整体误判成本地）。
 - 每个包注册了哪些分页，是从它自己的客户端 bundle 里读 `settings.section` 的 `id` 得到的
   （同时兼容手写与压缩两种写法）。
 - 同一个分页 id 被多个包抢注时（例如 `vision` 同时属于 `dsh-vision-assistant` 与已停用的
