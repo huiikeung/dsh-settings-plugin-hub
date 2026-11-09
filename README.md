@@ -109,6 +109,12 @@ DeepSeek Harness Web profile 插件：**设置左侧栏收纳 + 手工固定**�
   `<span class="navIcon">` 包裹，`buttonLabel` 原来读「第一个直接子 span」会拿到空文本的
   图标壳 → `isSettingsRail` 找不到本插件入口而整体放弃收纳（左侧栏保持原状）。现在改读
   「最后一个非空文本的直接子 span」，退回整格 `textContent`，0.1.x / 0.2.x 通吃。
+- **Windows / 桌面客户端**（v0.2.11 起）：Windows 没有 `HOME` 环境变量，原来 roots 为空
+  直接返回 null（「profile directory unresolved」）；现在 home 兜底用 `os.homedir()`
+  （与官方 dsh-home-paths 同一约定，`C:\Users\<user>\.dsh`）。另外桌面客户端的 profile
+  不叫 `web`（多为 `desktop`）——配置的名字不存在时自动扫描 `profiles/` 下带
+  `package.json` 的目录（优先 `desktop`）。pins 落盘（`resolveDshHome`）同样获得
+  homedir 兜底。
 - 归属不到任何已安装包的分页落进「来源未识别」，**仍然会被收纳**，只是来源不打标。
 
 所有端点都要求动作头 `x-settings-plugin-hub-action`（`webServer` 路由不带浏览器会话鉴权，

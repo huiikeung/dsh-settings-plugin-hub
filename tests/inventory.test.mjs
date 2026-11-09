@@ -10,8 +10,8 @@
  */
 import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { isAbsolute, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { after, describe, it } from 'node:test';
 
 import {
@@ -192,6 +192,30 @@ describe('resolveProfileDir', () => {
     writeFileSync(join(target, 'package.json'), '{}');
     assert.equal(resolveProfileDir({ env: { DSH_HOME: home }, profile: 'web' }), target);
   });
+
+  it('Windows 形态：没有 HOME 也没有 DSH_HOME 时也不返回 null（homedir 兜底）', () => {
+    const resolved = resolveProfileDir({ env: {} });
+    assert.ok(resolved !== null, 'roots 永不为空，最多是 profile 目录还没建');
+    assert.ok(resolved.endsWith(join('profiles', 'web')), `落到 homedir/.dsh/profiles/web：${resolved}`);
+  });
+
+  it('Windows 桌面客户端：configured 的 web 不存在时自动探测 desktop profile', () => {
+    const home = tempDir('hub-desktop-');
+    const target = join(home, 'profiles', 'desktop');
+    mkdirSync(target, { recursive: true });
+    writeFileSync(join(target, 'package.json'), '{}');
+    assert.equal(resolveProfileDir({ env: { DSH_HOME: home }, profile: 'web' }), target);
+  });
+
+  it('探测优先 desktop，其次任意带 package.json 的 profile', () => {
+    const home = tempDir('hub-multi-');
+    mkdirSync(join(home, 'profiles', 'other'), { recursive: true });
+    writeFileSync(join(home, 'profiles', 'other', 'package.json'), '{}');
+    mkdirSync(join(home, 'profiles', 'desktop'), { recursive: true });
+    writeFileSync(join(home, 'profiles', 'desktop', 'package.json'), '{}');
+    mkdirSync(join(home, 'profiles', 'empty'), { recursive: true });
+    assert.equal(resolveProfileDir({ env: { DSH_HOME: home }, profile: 'web' }), join(home, 'profiles', 'desktop'));
+  });
 });
 
 describe('resolveDshHome', () => {
@@ -205,8 +229,11 @@ describe('resolveDshHome', () => {
     assert.equal(resolveDshHome({ env: { DSH_HOME: '   ' }, home: '/home/me' }), '/home/me/.dsh');
   });
 
-  it('三样都没有时返回 null（调用方据此放弃写盘，而不是写相对路径）', () => {
-    assert.equal(resolveDshHome({ env: {}, home: undefined }), null);
+  it('三样都没有时用 os.homedir() 兜底（v0.2.11 起，Windows 没有 HOME 也能落到绝对路径）', () => {
+    const resolved = resolveDshHome({ env: {}, home: undefined });
+    assert.ok(resolved !== null);
+    assert.ok(isAbsolute(resolved), '必须是绝对路径，绝不写相对路径');
+    assert.ok(resolved.endsWith(join('.dsh')));
   });
 
   it('不要求 profile 已存在（首启动就要能定位 plugin-data）', () => {
